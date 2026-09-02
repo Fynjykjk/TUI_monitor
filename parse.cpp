@@ -1,15 +1,6 @@
 #include "status.h"
 #include "parse.h"
 
-parse_data::parse_data()
-{
-    // Constructor implementation
-}
-parse_data::~parse_data()
-{
-    // Destructor implementation
-}
-
 int parse_data::cpu_load_parse(status_t& status, std::array<cpu_ticks, 4>& curr_cpu_ticks)
 {
     std::ifstream cpu_load_file("/proc/stat");
@@ -43,6 +34,8 @@ int parse_data::cpu_load_parse(status_t& status, std::array<cpu_ticks, 4>& curr_
             else
             {
                 double cpu_usage = (1.0 - static_cast<double>(delta_idle) / delta_total) * 100.0;
+
+                std::lock_guard<std::mutex> lock(status.mtx);
                 status.cpu_load[i] = cpu_usage;
             }
             i++;
@@ -63,6 +56,8 @@ int parse_data::temp_parse(status_t& status)
 
     int temp_millidegree;
     temp_file >> temp_millidegree;
+
+    std::lock_guard<std::mutex> lock(status.mtx);
     status.cpu_temp = static_cast<double>(temp_millidegree) / 1000.0; // Convert to degrees Celsius
 
     temp_file.close();
@@ -79,6 +74,8 @@ int parse_data::freq_parse(status_t& status)
 
     size_t freq_khz;
     freq_file >> freq_khz;
+    
+    std::lock_guard<std::mutex> lock(status.mtx);
     status.cpu_freq_mhz  = (freq_khz / 1000); // Convert to MHz
 
     freq_file.close();
@@ -125,6 +122,7 @@ int parse_data::ram_parse(status_t& status)
         }
     }
 
+    std::lock_guard<std::mutex> lock(status.mtx);
     status.ram_used_mb = (mem_total_kb - mem_free_kb - buffers_kb - cached_kb) / 1024; // Convert to MB
     status.ram_total_mb = mem_total_kb / 1024; // Convert to MB
 
