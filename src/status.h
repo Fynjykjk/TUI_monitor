@@ -25,7 +25,7 @@ class status_t
         double get_ram_load() const;
 
         //setters
-        void is_running_switch();
+        void is_running_switch();ds
 
     private:
         size_t ram_used_mb{};
